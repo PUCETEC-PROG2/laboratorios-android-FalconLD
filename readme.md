@@ -1,8 +1,16 @@
 # Laboratorio Android. Cliente de GitHub
 
 ## Datos del estudiante
-- [Nombre del estudiante]
-- [Carrera]
+- Leonardo Falconi
+- PUCETEC - Desarrollo de software
+
+## Configuración local
+
+Añade tu token de GitHub en `local.properties` (no se sube al repositorio):
+
+```properties
+GITHUB_TOKEN=ghp_tu_token_aqui
+```
 
 ## Descripción del Proyecto
 Este proyecto es una serie de laboratorios para estudiantes donde se implementará una aplicación Android que funciona como cliente de GitHub utilizando Jetpack Compose. La aplicación evoluciona progresivamente desde una UI estática hasta una integración completa con la API REST de GitHub.
