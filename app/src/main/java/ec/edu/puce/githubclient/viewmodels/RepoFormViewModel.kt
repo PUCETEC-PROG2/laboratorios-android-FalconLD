@@ -35,6 +35,36 @@ class RepoFormViewModels : ViewModel() {
         }
     }
 
+    fun updateRepo(
+        owner: String,
+        currentRepoName: String,
+        newName: String,
+        description: String,
+    ) {
+        viewModelScope.launch {
+            _isLoading.value = true
+            _errorMsg.value = null
+            _isSuccess.value = false
+            try {
+                val payload = RepositoryPayload(
+                    name = newName,
+                    description = description.ifBlank { null },
+                )
+                RetrofitClient.apiService.updateRepository(owner, currentRepoName, payload)
+                _isSuccess.value = true
+            } catch (e: Exception) {
+                _errorMsg.value = "Error al actualizar repositorio: ${e.localizedMessage}"
+            } finally {
+                _isLoading.value = false
+            }
+        }
+    }
+
+    fun resetFormState() {
+        _errorMsg.value = null
+        _isSuccess.value = false
+    }
+
     fun resetSuccess() {
         _isSuccess.value = false
     }

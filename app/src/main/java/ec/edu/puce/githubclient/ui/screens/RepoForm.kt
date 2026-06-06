@@ -11,6 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import ec.edu.puce.githubclient.models.Repository
 import ec.edu.puce.githubclient.ui.theme.GithubClientTheme
 import ec.edu.puce.githubclient.viewmodels.RepoFormViewModels
 
@@ -19,10 +20,24 @@ import ec.edu.puce.githubclient.viewmodels.RepoFormViewModels
 fun RepoForm(
     onBackClick: () -> Unit = {},
     onSaveSuccess: () -> Unit = {},
-    viewModel: RepoFormViewModels = viewModel()
+    isEditMode: Boolean = false,
+    repositoryToEdit: Repository? = null,
+    viewModel: RepoFormViewModels = viewModel(),
 ) {
-    var repoName by remember { mutableStateOf("") }
-    var repoDescription by remember { mutableStateOf("") }
+    var repoName by remember(repositoryToEdit) {
+        mutableStateOf(if (isEditMode) repositoryToEdit?.name ?: "" else "")
+    }
+    var repoDescription by remember(repositoryToEdit) {
+        mutableStateOf(if (isEditMode) repositoryToEdit?.description ?: "" else "")
+    }
+
+    LaunchedEffect(isEditMode, repositoryToEdit) {
+        if (isEditMode) {
+            viewModel.resetFormState()
+            repoName = repositoryToEdit?.name ?: ""
+            repoDescription = repositoryToEdit?.description ?: ""
+        }
+    }
 
     val isLoading by viewModel.isLoading.collectAsState()
     val errorMsg by viewModel.errorMsg.collectAsState()
@@ -38,52 +53,53 @@ fun RepoForm(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Crear Repositorio") },
+                title = {
+                    Text(if (isEditMode) "Editar Repositorio" else "Crear Repositorio")
+                },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
                         Icon(
                             imageVector = Icons.Filled.ArrowBack,
                             contentDescription = "Regresar",
-                            tint = MaterialTheme.colorScheme.onPrimaryContainer
+                            tint = MaterialTheme.colorScheme.onPrimaryContainer,
                         )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primaryContainer,
                     titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                )
+                ),
             )
-        }
+        },
     ) { innerPadding ->
-
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding)
+                .padding(innerPadding),
         ) {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(horizontal = 16.dp),
                 verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.CenterHorizontally
+                horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 if (isLoading) {
                     CircularProgressIndicator(
-                        Modifier.align(Alignment.CenterHorizontally)
+                        Modifier.align(Alignment.CenterHorizontally),
                     )
-                } else if (!errorMsg.isNullOrBlank()){
+                } else if (!errorMsg.isNullOrBlank()) {
                     Text(
                         text = errorMsg!!,
                         color = MaterialTheme.colorScheme.error,
-                        modifier = Modifier.align(Alignment.CenterHorizontally)
+                        modifier = Modifier.align(Alignment.CenterHorizontally),
                     )
                 } else {
                     errorMsg?.let {
                         Text(
                             text = it,
                             color = MaterialTheme.colorScheme.error,
-                            modifier = Modifier.padding(bottom = 16.dp)
+                            modifier = Modifier.padding(bottom = 16.dp),
                         )
                     }
 
@@ -93,7 +109,7 @@ fun RepoForm(
                         label = { Text("Nombre del repositorio") },
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true,
-                        enabled = !isLoading
+                        enabled = !isLoading,
                     )
 
                     Spacer(modifier = Modifier.height(16.dp))
@@ -104,21 +120,30 @@ fun RepoForm(
                         label = { Text("Descripción del repositorio") },
                         modifier = Modifier.fillMaxWidth(),
                         minLines = 4,
-                        enabled = !isLoading
+                        enabled = !isLoading,
                     )
 
                     Spacer(modifier = Modifier.height(24.dp))
 
                     Button(
                         onClick = {
-                            viewModel.createRepo(name = repoName, description = repoDescription)
+                            if (isEditMode && repositoryToEdit != null) {
+                                viewModel.updateRepo(
+                                    owner = repositoryToEdit.owner.login,
+                                    currentRepoName = repositoryToEdit.name,
+                                    newName = repoName,
+                                    description = repoDescription,
+                                )
+                            } else {
+                                viewModel.createRepo(name = repoName, description = repoDescription)
+                            }
                         },
                         modifier = Modifier.fillMaxWidth(),
-                        enabled = !isLoading && repoName.isNotBlank()
+                        enabled = !isLoading && repoName.isNotBlank(),
                     ) {
                         Icon(
                             imageVector = Icons.Default.Send,
-                            contentDescription = "Guardar"
+                            contentDescription = "Guardar",
                         )
 
                         Spacer(modifier = Modifier.width(8.dp))
@@ -130,7 +155,7 @@ fun RepoForm(
 
             if (isLoading) {
                 CircularProgressIndicator(
-                    modifier = Modifier.align(Alignment.Center)
+                    modifier = Modifier.align(Alignment.Center),
                 )
             }
         }
